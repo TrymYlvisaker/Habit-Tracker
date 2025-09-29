@@ -1,3 +1,6 @@
+# IDE settings
+.vscode/
+
 # Node dependencies
 node_modules/
 npm-debug.log
@@ -16,3 +19,8 @@ Thumbs.db
 
 # Test 
 *.test.js
+
+# Misc
+.env.local
+.env.*.local
+*.pid

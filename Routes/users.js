@@ -1,11 +1,13 @@
 import express from 'express'
 import sql from '../db.js'
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
+import { authenticateToken } from '../middleware/auth.js'
 
 const router = express.Router()
 
 // GET all users
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
     const users = await sql`SELECT id, name, email, created_at FROM "habit-tracker".users`
     res.json(users)
@@ -68,9 +70,17 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid password' })
     }
 
-    // In production, you’d generate a JWT token here
-    // TODO
-    res.json({ message: 'Login successful', user: { id: user.id, name: user.name, email: user.email } })
+    const token = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+    )
+
+    res.json({ 
+        message: 'Login successful', 
+        user: { id: user.id, name: user.name, email: user.email }, 
+        token 
+    })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

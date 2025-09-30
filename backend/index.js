@@ -1,5 +1,6 @@
 import express from 'express'
 import 'dotenv/config'
+import cors from 'cors'  
 import usersRouter from './Routes/users.js'
 import habitsRouter from './Routes/habits.js'
 import habitLogsRouter from './Routes/habit_logs.js'
@@ -7,6 +8,7 @@ import habitLogsRouter from './Routes/habit_logs.js'
 const app = express()
 const port = process.env.PORT || 3000
 
+app.use(cors())
 app.use(express.json())
 
 app.use('/users', usersRouter)

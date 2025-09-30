@@ -1,35 +1,39 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import Signup from "./pages/Signup.jsx";
+import Login from "./pages/Login.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [page, setPage] = useState("signup"); // "signup", "login", "dashboard"
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (loggedInUser) => {
+    setUser(loggedInUser);
+    setPage("dashboard");
+  };
 
   return (
-    <>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        {/* Navigation */}
+        <div className="flex gap-4 mb-6 justify-center">
+          <button onClick={() => setPage("signup")} className="px-3 py-1 bg-gray-200 rounded">
+            Signup
+          </button>
+          <button onClick={() => setPage("login")} className="px-3 py-1 bg-gray-200 rounded">
+            Login
+          </button>
+          <button onClick={() => setPage("dashboard")} className="px-3 py-1 bg-gray-200 rounded">
+            Dashboard
+          </button>
+        </div>
+        {/* Centered content */}
+        {page === "signup" && <Signup />}
+        {page === "login" && <Login onLogin={handleLogin} />}
+        {page === "dashboard" && user && <Dashboard user={user} />}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;

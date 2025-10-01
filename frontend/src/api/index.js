@@ -58,3 +58,14 @@ export async function completeHabit(habitId, token) {
   });
   return handleResponse(res);
 }
+
+export async function deleteHabit(habitId, token) {
+  const res = await fetch(`${API_URL}/habits/${habitId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return handleResponse(res);
+}

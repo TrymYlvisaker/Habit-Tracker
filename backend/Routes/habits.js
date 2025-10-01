@@ -93,5 +93,44 @@ router.post('/:habit_id/complete', authenticateToken, async (req, res) => {
   }
 })
 
+// DELETE a habit and all its associated logs
+router.delete('/:habit_id', authenticateToken, async (req, res) => {
+  const { habit_id } = req.params
+  const user_id = req.user.userId
+
+  try {
+    // Ensure the habit belongs to the current user
+    const habit = await sql`
+      SELECT * FROM "habit-tracker".habits
+      WHERE id = ${habit_id} AND user_id = ${user_id}
+    `
+    if (habit.length === 0) {
+      return res.status(404).json({ error: 'Habit not found or not yours' })
+    }
+
+    // Delete all habit logs first (due to foreign key constraint)
+    await sql`
+      DELETE FROM "habit-tracker".habit_logs
+      WHERE habit_id = ${habit_id}
+    `
+
+    // Delete the habit
+    const deletedHabit = await sql`
+      DELETE FROM "habit-tracker".habits
+      WHERE id = ${habit_id} AND user_id = ${user_id}
+      RETURNING *
+    `
+
+    res.json({ 
+      success: true, 
+      message: 'Habit deleted successfully',
+      deleted_habit: deletedHabit[0]
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Failed to delete habit' })
+  }
+})
+
 
 export default router

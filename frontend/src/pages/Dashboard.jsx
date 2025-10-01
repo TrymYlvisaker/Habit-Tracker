@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getHabits, createHabit, completeHabit } from "../api";
+import { getHabits, createHabit, completeHabit, deleteHabit } from "../api";
 
 export default function Dashboard({ user }) {
   const [habits, setHabits] = useState([]);
@@ -12,6 +12,7 @@ export default function Dashboard({ user }) {
   });
   const [submitting, setSubmitting] = useState(false);
   const [completingHabits, setCompletingHabits] = useState(new Set());
+  const [deletingHabits, setDeletingHabits] = useState(new Set());
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -76,6 +77,27 @@ const handleComplete = async (habitId) => {
     alert("Failed to complete habit. " + (error.message || "Please try again."));
   } finally {
     setCompletingHabits(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(habitId);
+      return newSet;
+    });
+  }
+};
+
+const handleDelete = async (habitId) => {
+  if (!window.confirm("Are you sure you want to delete this habit? This action cannot be undone.")) {
+    return;
+  }
+
+  setDeletingHabits(prev => new Set([...prev, habitId]));
+  try {
+    await deleteHabit(habitId, token);
+    setHabits(prev => prev.filter(h => h.id !== habitId));
+  } catch (error) {
+    console.error("Failed to delete habit:", error);
+    alert("Failed to delete habit. " + (error.message || "Please try again."));
+  } finally {
+    setDeletingHabits(prev => {
       const newSet = new Set(prev);
       newSet.delete(habitId);
       return newSet;
@@ -201,6 +223,7 @@ const handleComplete = async (habitId) => {
                     .filter(habit => !habit.is_completed)
                     .map((habit) => {
                       const isCompleting = completingHabits.has(habit.id);
+                      const isDeleting = deletingHabits.has(habit.id);
                       
                       return (
                         <li key={habit.id} style={{ 
@@ -215,16 +238,35 @@ const handleComplete = async (habitId) => {
                             <div>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                                 <p style={{ fontWeight: 'bold', color: '#1f2937', fontSize: '1.25rem', margin: 0 }}>{habit.title}</p>
-                                <div style={{
-                                  padding: '4px 8px',
-                                  backgroundColor: '#fef3c7',
-                                  color: '#92400e',
-                                  fontSize: '0.75rem',
-                                  fontWeight: '600',
-                                  borderRadius: '6px',
-                                  border: '1px solid #fcd34d'
-                                }}>
-                                  🔥 {habit.streak || 0} day{(habit.streak || 0) !== 1 ? 's' : ''}
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                  <div style={{
+                                    padding: '4px 8px',
+                                    backgroundColor: '#fef3c7',
+                                    color: '#92400e',
+                                    fontSize: '0.75rem',
+                                    fontWeight: '600',
+                                    borderRadius: '6px',
+                                    border: '1px solid #fcd34d'
+                                  }}>
+                                    🔥 {habit.streak || 0} streak
+                                  </div>
+                                  <button
+                                    onClick={() => handleDelete(habit.id)}
+                                    disabled={isDeleting}
+                                    style={{
+                                      padding: '4px 8px',
+                                      backgroundColor: isDeleting ? '#fca5a5' : '#ef4444',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '6px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: '600',
+                                      cursor: isDeleting ? 'not-allowed' : 'pointer'
+                                    }}
+                                    title="Delete habit"
+                                  >
+                                    {isDeleting ? '...' : '🗑️'}
+                                  </button>
                                 </div>
                               </div>
                               <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '12px' }}>{habit.description}</p>
@@ -269,54 +311,77 @@ const handleComplete = async (habitId) => {
                 <ul className="space-y-3" style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
                   {habits
                     .filter(habit => habit.is_completed)
-                    .map((habit) => (
-                      <li key={habit.id} style={{
-                        padding: '20px',
-                        backgroundColor: '#ffffff',
-                        border: '3px solid #10b981',
-                        borderRadius: '12px',
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                        marginBottom: '16px',
-                        opacity: '0.8'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                              <p style={{ fontWeight: 'bold', color: '#1f2937', fontSize: '1.25rem', margin: 0, textDecoration: 'line-through' }}>{habit.title}</p>
-                              <div style={{
-                                padding: '4px 8px',
-                                backgroundColor: '#fef3c7',
-                                color: '#92400e',
-                                fontSize: '0.75rem',
-                                fontWeight: '600',
-                                borderRadius: '6px',
-                                border: '1px solid #fcd34d'
-                              }}>
-                                🔥 {habit.streak || 0} day{(habit.streak || 0) !== 1 ? 's' : ''}
+                    .map((habit) => {
+                      const isDeleting = deletingHabits.has(habit.id);
+                      
+                      return (
+                        <li key={habit.id} style={{
+                          padding: '20px',
+                          backgroundColor: '#ffffff',
+                          border: '3px solid #10b981',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                          marginBottom: '16px',
+                          opacity: '0.8'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                                <p style={{ fontWeight: 'bold', color: '#1f2937', fontSize: '1.25rem', margin: 0, textDecoration: 'line-through' }}>{habit.title}</p>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                  <div style={{
+                                    padding: '4px 8px',
+                                    backgroundColor: '#fef3c7',
+                                    color: '#92400e',
+                                    fontSize: '0.75rem',
+                                    fontWeight: '600',
+                                    borderRadius: '6px',
+                                    border: '1px solid #fcd34d'
+                                  }}>
+                                    🔥 {habit.streak || 0} streak
+                                  </div>
+                                  <button
+                                    onClick={() => handleDelete(habit.id)}
+                                    disabled={isDeleting}
+                                    style={{
+                                      padding: '4px 8px',
+                                      backgroundColor: isDeleting ? '#fca5a5' : '#ef4444',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '6px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: '600',
+                                      cursor: isDeleting ? 'not-allowed' : 'pointer'
+                                    }}
+                                    title="Delete habit"
+                                  >
+                                    {isDeleting ? '...' : '🗑️'}
+                                  </button>
+                                </div>
                               </div>
+                              <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '12px' }}>{habit.description}</p>
+                              <p style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                {habit.frequency.charAt(0).toUpperCase() + habit.frequency.slice(1)}
+                              </p>
                             </div>
-                            <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '12px' }}>{habit.description}</p>
-                            <p style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                              {habit.frequency.charAt(0).toUpperCase() + habit.frequency.slice(1)}
-                            </p>
+                            <div style={{ marginLeft: '16px' }}>
+                              <span style={{
+                                padding: '8px 12px',
+                                backgroundColor: '#dcfce7',
+                                color: '#166534',
+                                fontSize: '0.875rem',
+                                fontWeight: '600',
+                                borderRadius: '8px',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                border: '1px solid #bbf7d0'
+                              }}>
+                                ✓ Done
+                              </span>
+                            </div>
                           </div>
-                          <div style={{ marginLeft: '16px' }}>
-                            <span style={{
-                              padding: '8px 12px',
-                              backgroundColor: '#dcfce7',
-                              color: '#166534',
-                              fontSize: '0.875rem',
-                              fontWeight: '600',
-                              borderRadius: '8px',
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                              border: '1px solid #bbf7d0'
-                            }}>
-                              ✓ Done
-                            </span>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
+                        </li>
+                      );
+                    })}
                 </ul>
                 {habits.filter(habit => habit.is_completed).length === 0 && (
                   <p className="text-center text-gray-400 py-8 text-sm">

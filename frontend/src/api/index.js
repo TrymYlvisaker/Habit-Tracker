@@ -35,3 +35,26 @@ export async function getHabits(token) {
   });
   return handleResponse(res);
 }
+
+export async function createHabit(habitData, token) {
+  const res = await fetch(`${API_URL}/habits`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(habitData),
+  });
+  return handleResponse(res);
+}
+
+export async function completeHabit(habitId, token) {
+  const res = await fetch(`${API_URL}/habits/${habitId}/complete`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return handleResponse(res);
+}

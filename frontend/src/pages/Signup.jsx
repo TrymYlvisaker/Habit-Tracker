@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { signup } from "../api";
 
-export default function Signup() {
+export default function Signup({ onSignup }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +18,14 @@ export default function Signup() {
       const response = await signup({ name, email, password });
       setSuccess("Signup successful!");
       console.log(response);
+      
+      // If signup is successful and returns a token, auto-login the user
+      if (response.token && response.user) {
+        localStorage.setItem("token", response.token);
+        if (onSignup) {
+          onSignup(response.user);
+        }
+      }
     } catch (err) {
       setError(err.message);
     } finally {

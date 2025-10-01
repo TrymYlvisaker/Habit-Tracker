@@ -1,6 +1,6 @@
 import express from 'express'
 import sql from '../db.js'
-import { needsReset } from '../habitHelpers.js'
+import { needsReset, calculateStreak } from '../habitHelpers.js'
 import { authenticateToken } from '../middleware/auth.js'
 
 
@@ -13,7 +13,21 @@ router.get('/', authenticateToken, async (req, res) => {
       SELECT * FROM "habit-tracker".habits
       WHERE user_id = ${req.user.userId}
     `
-    res.json(habits)
+
+    const habitsWithStatus = await Promise.all(
+      habits.map(async (habit) => {
+        const needsResetResult = await needsReset(habit.id);
+        const streak = await calculateStreak(habit.id);
+        return {
+          ...habit,
+          can_complete: needsResetResult !== null ? needsResetResult : true,
+          is_completed: needsResetResult !== null ? !needsResetResult : false,
+          streak: streak
+        };
+      })
+    );
+
+    res.json(habitsWithStatus)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -64,7 +78,15 @@ router.post('/:habit_id/complete', authenticateToken, async (req, res) => {
       VALUES (${habit_id}, true, CURRENT_TIMESTAMP)
       RETURNING *
     `
-    res.json({ success: true, log: result[0] })
+    
+    // Calculate the new streak after completion
+    const newStreak = await calculateStreak(habit_id)
+    
+    res.json({ 
+      success: true, 
+      log: result[0],
+      streak: newStreak 
+    })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Failed to log habit' })

@@ -12,7 +12,7 @@ const port = process.env.PORT || 3000
 // Configure CORS for both local and production environments
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.vercel.app'] // Replace with your actual Vercel frontend URL
+    ? [process.env.FRONTEND_URL || 'https://your-frontend-domain.vercel.app'] // Use environment variable with fallback
     : ['http://localhost:5173', 'http://localhost:3000'], // Vite dev server runs on 5173 by default
   credentials: true
 }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { login } from "../api";
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -13,7 +13,7 @@ export default function Login({ onLogin }) {
     setError("");
 
     try {
-      const response = await login({ email, password });
+      const response = await login({ name, password });
 
       if (response.error) {
         setError(response.error);
@@ -34,12 +34,12 @@ export default function Login({ onLogin }) {
         <h1 className="text-2xl font-bold mb-4 text-center">Login</h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col">
-            Email
+            Name
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Username: "
               className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
             />
@@ -51,7 +51,7 @@ export default function Login({ onLogin }) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder="Password: "
               className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
             />

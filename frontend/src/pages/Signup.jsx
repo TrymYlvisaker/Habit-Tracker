@@ -37,35 +37,35 @@ export default function Signup({ onSignup }) {
         <h1 className="text-2xl font-bold mb-4 text-center">Sign Up</h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col">
-            Name
+            Name: 
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Username: "
+              placeholder="Username"
               className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
             />
           </label>
 
           <label className="flex flex-col">
-            Email (optional)
+            Email (optional): 
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com (optional): "
+              placeholder="you@example.com"
               className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </label>
 
           <label className="flex flex-col">
-            Password
+            Password: 
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password: "
+              placeholder="Password"
               className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
             />

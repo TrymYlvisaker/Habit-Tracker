@@ -49,14 +49,13 @@ export default function Signup({ onSignup }) {
           </label>
 
           <label className="flex flex-col">
-            Email
+            Email (optional)
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="you@example.com (optional)"
               className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
             />
           </label>
 

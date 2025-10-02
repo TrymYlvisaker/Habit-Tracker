@@ -21,8 +21,8 @@ router.get('/', authenticateToken, async (req, res) => {
 router.post('/signup', async (req, res) => {
   const { name, email, password } = req.body
 
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' })
+  if (!name || !password) {
+    return res.status(400).json({ error: 'Name and password are required' })
   }
 
   try {
@@ -31,15 +31,15 @@ router.post('/signup', async (req, res) => {
 
     const newUser = await sql`
       INSERT INTO "habit-tracker".users (name, email, password_hash)
-      VALUES (${name || null}, ${email}, ${password_hash})
+      VALUES (${name}, ${email || null}, ${password_hash})
       RETURNING id, name, email, created_at
     `
 
     res.status(201).json(newUser[0])
   } catch (err) {
     if (err.code === '23505') {
-      // Unique violation (email already exists)
-      return res.status(409).json({ error: 'Email already exists' })
+      // Unique violation (name already exists)
+      return res.status(409).json({ error: 'Name already exists' })
     }
     res.status(500).json({ error: err.message })
   }
@@ -47,17 +47,17 @@ router.post('/signup', async (req, res) => {
 
 // POST /users/login — Authenticate user and return JWT token
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body
+  const { name, password } = req.body
 
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' })
+  if (!name || !password) {
+    return res.status(400).json({ error: 'Name and password are required' })
   }
 
   try {
     const users = await sql`
       SELECT id, name, email, password_hash
       FROM "habit-tracker".users
-      WHERE email = ${email}
+      WHERE name = ${name}
     `
 
     if (users.length === 0) {
@@ -74,7 +74,7 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT token for authenticated session
     const token = jwt.sign(
-        { userId: user.id, email: user.email },
+        { userId: user.id, name: user.name },
         process.env.JWT_SECRET,
         { expiresIn: '1h' }
     )

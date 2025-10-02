@@ -1,3 +1,4 @@
+// Main server file for the Habit Tracker API
 import express from 'express'
 import 'dotenv/config'
 import cors from 'cors'  
@@ -8,9 +9,12 @@ import habitLogsRouter from './Routes/habit_logs.js'
 const app = express()
 const port = process.env.PORT || 3000
 
+// Enable CORS for frontend communication
 app.use(cors())
+// Parse JSON request bodies
 app.use(express.json())
 
+// Mount API routes
 app.use('/users', usersRouter)
 app.use('/habits', habitsRouter)
 app.use('/habit_logs', habitLogsRouter)

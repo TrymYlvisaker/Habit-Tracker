@@ -1,3 +1,4 @@
+// Main dashboard component - displays and manages user's habits
 import { useEffect, useState } from "react";
 import { getHabits, createHabit, completeHabit, deleteHabit } from "../api";
 
@@ -11,10 +12,12 @@ export default function Dashboard({ user }) {
     frequency: "daily"
   });
   const [submitting, setSubmitting] = useState(false);
+  // Track which habits are being processed to prevent duplicate actions
   const [completingHabits, setCompletingHabits] = useState(new Set());
   const [deletingHabits, setDeletingHabits] = useState(new Set());
   const token = localStorage.getItem("token");
 
+  // Load user's habits on component mount
   useEffect(() => {
     async function fetchHabits() {
       try {
@@ -54,6 +57,7 @@ export default function Dashboard({ user }) {
     }
   };
 
+// Handle habit completion - prevent duplicate completions and update UI
 const handleComplete = async (habitId) => {
   const habit = habits.find(h => h.id === habitId);
   if (habit?.is_completed) {
@@ -64,6 +68,7 @@ const handleComplete = async (habitId) => {
   setCompletingHabits(prev => new Set([...prev, habitId]));
   try {
     const response = await completeHabit(habitId, token);
+    // Update habit state with completion status and new streak
     setHabits(prev => prev.map(h => 
       h.id === habitId ? { 
         ...h, 

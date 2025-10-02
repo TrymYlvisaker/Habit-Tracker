@@ -1,7 +1,12 @@
+// Helper functions for habit completion tracking and streak calculation
 import sql from './db.js'
 
 
-// Checks if a habit needs to be reset based on its frequency and last completion date
+/**
+ * Determines if a habit can be completed for the current period
+ * Returns true if habit can be completed, false if already completed, null if habit not found
+ * Handles different frequencies: daily, weekly (Monday start), monthly
+ */
 export async function needsReset(habit_id) {
   const habit = await sql`
     SELECT frequency
@@ -18,10 +23,12 @@ export async function needsReset(habit_id) {
 
   let startDate, endDate;
 
+  // Calculate period boundaries based on frequency
   if (frequency === 'daily') {
     startDate = new Date(todayUTC)
     endDate = new Date(todayUTC.getTime() + 24 * 60 * 60 * 1000) // Tomorrow
   } else if (frequency === 'weekly') {
+    // Week starts on Monday (day 1), ends on Sunday
     const dayOfWeek = todayUTC.getUTCDay()
     const offset = dayOfWeek === 0 ? 6 : dayOfWeek - 1 // Monday = 0 offset
     startDate = new Date(todayUTC.getTime() - (offset * 24 * 60 * 60 * 1000))
@@ -34,6 +41,7 @@ export async function needsReset(habit_id) {
   const startDateStr = startDate.toISOString()
   const endDateStr = endDate.toISOString()
 
+  // Check if habit was already completed in current period
   const logs = await sql`
     SELECT status, date
     FROM "habit-tracker".habit_logs
@@ -51,7 +59,11 @@ export async function needsReset(habit_id) {
   return canComplete
 }
 
-// Calculate current streak for a habit
+/**
+ * Calculates the current streak for a habit based on consecutive completions
+ * Streak breaks if there's a gap in the completion pattern for the habit's frequency
+ * For daily habits: consecutive days, for weekly: consecutive weeks, for monthly: consecutive months
+ */
 export async function calculateStreak(habit_id) {
   try {
     // Get habit frequency to determine streak calculation logic
@@ -83,7 +95,9 @@ export async function calculateStreak(habit_id) {
     const today = new Date();
     const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
     
+    // Daily habit streak calculation
     if (frequency === 'daily') {
+      // Convert log dates to UTC timestamps for comparison
       const logDates = logs
         .map(log => {
           const date = new Date(log.date);
@@ -98,7 +112,7 @@ export async function calculateStreak(habit_id) {
       // Find the most recent completion date
       const mostRecentCompletion = Math.max(...logDates);
       
-      // Check if most recent completion is today or yesterday
+      // Check if most recent completion is today or yesterday to start streak
       const yesterdayUTC = new Date(todayUTC.getTime() - 24 * 60 * 60 * 1000);
       
       let startDate;
@@ -109,10 +123,10 @@ export async function calculateStreak(habit_id) {
         startDate = new Date(yesterdayUTC);
         streak = 1;
       } else {
-        return 0;
+        return 0; // Streak broken - no recent completion
       }
       
-      // Count consecutive days backwards
+      // Count consecutive days backwards from start date
       let checkDate = new Date(startDate.getTime() - 24 * 60 * 60 * 1000);
       
       while (logDates.includes(checkDate.getTime())) {
@@ -121,7 +135,9 @@ export async function calculateStreak(habit_id) {
       }
     }
     
+    // Weekly habit streak calculation (weeks start on Monday)
     else if (frequency === 'weekly') {
+      // Helper function to get Monday of the week for any date
       const getWeekStart = (date) => {
         const d = new Date(date);
         const dayOfWeek = d.getUTCDay();
@@ -130,6 +146,7 @@ export async function calculateStreak(habit_id) {
         return new Date(Date.UTC(weekStart.getUTCFullYear(), weekStart.getUTCMonth(), weekStart.getUTCDate()));
       };
       
+      // Group completions by week start dates
       const logWeekStarts = logs
         .map(log => {
           const logDate = new Date(log.date);
@@ -146,6 +163,7 @@ export async function calculateStreak(habit_id) {
       const lastWeekStart = getWeekStart(new Date(todayUTC.getTime() - 7 * 24 * 60 * 60 * 1000)).getTime();
       const mostRecentWeek = Math.max(...uniqueWeekStarts);
       
+      // Start streak if completed this week or last week
       let startWeek;
       if (mostRecentWeek === currentWeekStart) {
         startWeek = currentWeekStart;
@@ -154,9 +172,10 @@ export async function calculateStreak(habit_id) {
         startWeek = lastWeekStart;
         streak = 1;
       } else {
-        return 0;
+        return 0; // Streak broken
       }
       
+      // Count consecutive weeks backwards
       let checkWeek = startWeek - (7 * 24 * 60 * 60 * 1000); 
       
       while (uniqueWeekStarts.includes(checkWeek)) {
@@ -165,7 +184,9 @@ export async function calculateStreak(habit_id) {
       }
     }
     
+    // Monthly habit streak calculation (months start on 1st day)
     else if (frequency === 'monthly') {
+      // Group completions by month start dates (1st of each month)
       const logMonthStarts = logs
         .map(log => {
           const date = new Date(log.date);
@@ -185,6 +206,7 @@ export async function calculateStreak(habit_id) {
       const lastMonthStart = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth() - 1, 1)).getTime();
       const mostRecentMonth = Math.max(...uniqueMonthStarts);
       
+      // Start streak if completed this month or last month
       let startMonth;
       if (mostRecentMonth === currentMonthStart) {
         startMonth = currentMonthStart;
@@ -193,9 +215,10 @@ export async function calculateStreak(habit_id) {
         startMonth = lastMonthStart;
         streak = 1;
       } else {
-        return 0;
+        return 0; // Streak broken
       }
       
+      // Count consecutive months backwards
       let checkMonthTime = startMonth;
       let checkDate = new Date(checkMonthTime);
       let prevMonthStart = new Date(Date.UTC(checkDate.getUTCFullYear(), checkDate.getUTCMonth() - 1, 1)).getTime();

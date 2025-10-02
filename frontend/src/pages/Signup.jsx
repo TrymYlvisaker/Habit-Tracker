@@ -19,7 +19,6 @@ export default function Signup({ onSignup }) {
       setSuccess("Signup successful!");
       console.log(response);
       
-      // If signup is successful and returns a token, auto-login the user
       if (response.token && response.user) {
         localStorage.setItem("token", response.token);
         if (onSignup) {

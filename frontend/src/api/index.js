@@ -1,5 +1,7 @@
+// API functions for communicating with the Habit Tracker backend
 const API_URL = "http://localhost:3000";
 
+// Helper function to handle API responses and errors
 async function handleResponse(res) {
   const data = await res.json();
   if (!res.ok) {
@@ -8,6 +10,7 @@ async function handleResponse(res) {
   return data;
 }
 
+// User registration - create new account
 export async function signup(userData) {
   const res = await fetch(`${API_URL}/users/signup`, {
     method: "POST",
@@ -17,6 +20,7 @@ export async function signup(userData) {
   return handleResponse(res);
 }
 
+// User authentication - login and get JWT token
 export async function login(credentials) {
   const res = await fetch(`${API_URL}/users/login`, {
     method: "POST",
@@ -26,6 +30,7 @@ export async function login(credentials) {
   return handleResponse(res);
 }
 
+// Fetch all habits for authenticated user with completion status
 export async function getHabits(token) {
   const res = await fetch(`${API_URL}/habits`, {
     headers: {
@@ -36,6 +41,7 @@ export async function getHabits(token) {
   return handleResponse(res);
 }
 
+// Create a new habit for authenticated user
 export async function createHabit(habitData, token) {
   const res = await fetch(`${API_URL}/habits`, {
     method: "POST",
@@ -48,6 +54,7 @@ export async function createHabit(habitData, token) {
   return handleResponse(res);
 }
 
+// Mark a habit as completed for current period
 export async function completeHabit(habitId, token) {
   const res = await fetch(`${API_URL}/habits/${habitId}/complete`, {
     method: "POST",
@@ -59,6 +66,7 @@ export async function completeHabit(habitId, token) {
   return handleResponse(res);
 }
 
+// Delete a habit and all its completion logs
 export async function deleteHabit(habitId, token) {
   const res = await fetch(`${API_URL}/habits/${habitId}`, {
     method: "DELETE",

@@ -20,7 +20,7 @@ export default function Login({ onLogin }) {
       } else {
         // Store JWT for later API calls
         localStorage.setItem("token", response.token);
-        onLogin(response.user); // pass user info to parent (App)
+        onLogin(response.user);
       }
     } catch {
       setError("Something went wrong. Try again.");

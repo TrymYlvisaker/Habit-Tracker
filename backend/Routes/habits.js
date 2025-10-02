@@ -1,3 +1,4 @@
+// Habit management routes - create, read, complete, and delete habits
 import express from 'express'
 import sql from '../db.js'
 import { needsReset, calculateStreak } from '../habitHelpers.js'
@@ -6,7 +7,7 @@ import { authenticateToken } from '../middleware/auth.js'
 
 const router = express.Router()
 
-// GET all habits for the authenticated user
+// GET all habits for the authenticated user with completion status and streak
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const habits = await sql`
@@ -14,6 +15,7 @@ router.get('/', authenticateToken, async (req, res) => {
       WHERE user_id = ${req.user.userId}
     `
 
+    // Enhance each habit with completion status and current streak
     const habitsWithStatus = await Promise.all(
       habits.map(async (habit) => {
         const needsResetResult = await needsReset(habit.id);
@@ -33,7 +35,7 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 })
 
-// POST create a habit
+// POST create a new habit for the authenticated user
 router.post('/', authenticateToken, async (req, res) => {
   const { title, description, frequency } = req.body
   const user_id = req.user.userId
@@ -53,13 +55,13 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 })
 
-// POST mark habit as completed for the current period
+// POST mark habit as completed for the current period (daily/weekly/monthly)
 router.post('/:habit_id/complete', authenticateToken, async (req, res) => {
   const { habit_id } = req.params
   const user_id = req.user.userId
 
   try {
-    // Ensure the habit belongs to the current user
+    // Verify habit ownership before allowing completion
     const habit = await sql`
       SELECT * FROM "habit-tracker".habits
       WHERE id = ${habit_id} AND user_id = ${user_id}
@@ -68,7 +70,7 @@ router.post('/:habit_id/complete', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Habit not found or not yours' })
     }
 
-    // Check if already logged for current period
+    // Prevent duplicate completions for the same period
     const reset = await needsReset(habit_id)
     if (!reset) return res.status(400).json({ error: 'Already completed this period' })
 

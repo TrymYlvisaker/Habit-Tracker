@@ -1,3 +1,4 @@
+// User authentication and management routes
 import express from 'express'
 import sql from '../db.js'
 import bcrypt from 'bcrypt'
@@ -16,7 +17,7 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 })
 
-// POST /users/signup — create a new user
+// POST /users/signup — Register a new user with hashed password
 router.post('/signup', async (req, res) => {
   const { name, email, password } = req.body
 
@@ -25,7 +26,7 @@ router.post('/signup', async (req, res) => {
   }
 
   try {
-    // Hash the password
+    // Hash the password before storing
     const password_hash = await bcrypt.hash(password, 10)
 
     const newUser = await sql`
@@ -44,7 +45,7 @@ router.post('/signup', async (req, res) => {
   }
 })
 
-// POST /users/login — simple login
+// POST /users/login — Authenticate user and return JWT token
 router.post('/login', async (req, res) => {
   const { email, password } = req.body
 
@@ -65,11 +66,13 @@ router.post('/login', async (req, res) => {
 
     const user = users[0]
 
+    // Verify password against stored hash
     const match = await bcrypt.compare(password, user.password_hash)
     if (!match) {
       return res.status(401).json({ error: 'Invalid password' })
     }
 
+    // Generate JWT token for authenticated session
     const token = jwt.sign(
         { userId: user.id, email: user.email },
         process.env.JWT_SECRET,

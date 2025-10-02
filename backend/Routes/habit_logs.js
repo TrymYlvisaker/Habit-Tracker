@@ -1,3 +1,4 @@
+// Habit log management routes - track completion history and check reset status
 import express from 'express'
 import sql from '../db.js'
 import { needsReset } from '../habitHelpers.js'
@@ -5,7 +6,7 @@ import { authenticateToken } from '../middleware/auth.js'
 
 const router = express.Router();
 
-// Get logs for a habit TODO
+// GET habit completion logs ordered by date (newest first)
 router.get('/:habit_id/logs', authenticateToken, async (req, res) => {
     const { habit_id } = req.params;
     try {
@@ -21,7 +22,7 @@ router.get('/:habit_id/logs', authenticateToken, async (req, res) => {
     }
 });
 
-// Add a new log entry
+// POST create a new habit log entry
 router.post('/:habit_id/logs', authenticateToken, async (req, res) => {
     const { habit_id } = req.params;
     const { status, date } = req.body;
@@ -37,7 +38,7 @@ router.post('/:habit_id/logs', authenticateToken, async (req, res) => {
     }
 });
 
-
+// GET check if habit can be completed (needs reset) for current period
 router.get('/:habit_id/needs_reset', authenticateToken, async (req, res) => {
   const { habit_id } = req.params
   try {

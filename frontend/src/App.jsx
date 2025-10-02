@@ -1,3 +1,4 @@
+// Main App component - handles authentication state and page routing
 import { useState, useEffect } from "react";
 import Signup from "./pages/Signup.jsx";
 import Login from "./pages/Login.jsx";
@@ -9,6 +10,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Check for existing authentication on app load
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
@@ -21,6 +23,7 @@ function App() {
         setPage("dashboard");
       } catch (error) {
         console.error("Error parsing user data:", error);
+        // Clean up corrupted data
         localStorage.removeItem("token");
         localStorage.removeItem("user");
       }
@@ -28,6 +31,7 @@ function App() {
     setLoading(false);
   }, []);
 
+  // Handle successful login - store user data and redirect to dashboard
   const handleLogin = (loggedInUser) => {
     setUser(loggedInUser);
     setIsAuthenticated(true);
@@ -36,6 +40,7 @@ function App() {
     localStorage.setItem("user", JSON.stringify(loggedInUser));
   };
 
+  // Handle logout - clear all user data and redirect to login
   const handleLogout = () => {
     setUser(null);
     setIsAuthenticated(false);

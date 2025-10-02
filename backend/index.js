@@ -9,8 +9,15 @@ import habitLogsRouter from './Routes/habit_logs.js'
 const app = express()
 const port = process.env.PORT || 3000
 
-// Enable CORS for frontend communication
-app.use(cors())
+// Configure CORS for both local and production environments
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-frontend-domain.vercel.app'] // Replace with your actual Vercel frontend URL
+    : ['http://localhost:5173', 'http://localhost:3000'], // Vite dev server runs on 5173 by default
+  credentials: true
+}
+
+app.use(cors(corsOptions))
 // Parse JSON request bodies
 app.use(express.json())
 

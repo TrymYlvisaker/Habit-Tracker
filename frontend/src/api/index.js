@@ -1,5 +1,5 @@
 // API functions for communicating with the Habit Tracker backend
-const API_URL = "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Helper function to handle API responses and errors
 async function handleResponse(res) {

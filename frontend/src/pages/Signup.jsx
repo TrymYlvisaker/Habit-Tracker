@@ -42,7 +42,7 @@ export default function Signup({ onSignup }) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
+              placeholder="Username: "
               className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
             />
@@ -54,7 +54,7 @@ export default function Signup({ onSignup }) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com (optional)"
+              placeholder="you@example.com (optional): "
               className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </label>
@@ -65,7 +65,7 @@ export default function Signup({ onSignup }) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder="Password: "
               className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
             />

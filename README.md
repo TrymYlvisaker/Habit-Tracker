@@ -2,6 +2,9 @@
 
 A full-stack web application for tracking daily habits and building positive routines. Built with React, Node.js, Express, and PostgreSQL.
 
+![](https://github.com/TrymYlvisaker/Habit-Tracker/blob/main/image/example.png)
+
+
 ## Features
 
 - **User Authentication**: Secure signup and login with JWT tokens

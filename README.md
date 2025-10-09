@@ -13,7 +13,7 @@ A full-stack web application for tracking daily habits and building positive rou
 
 ## Demo
 
-https://habit-tracker-omega-orcin.vercel.app
+https://habit-tracker-omega-orcin.vercel.app (API might be offline due to inactivity)
 
 - **Vercel** - Frontend host
 - **Render** - Backend host

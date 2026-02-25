@@ -30,29 +30,35 @@ export default function Login({ onLogin }) {
   };
 
   return (
-      <div className="w-full max-w-md p-6 bg-white shadow-lg rounded">
-        <h1 className="text-2xl font-bold mb-4 text-center">Login</h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="flex flex-col">
-            Name: 
+      <div style={{ maxWidth: '400px', margin: '0 auto', padding: '2rem', backgroundColor: 'white', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '2rem', textAlign: 'center' }}>Login</h1>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', marginBottom: '1.5rem' }}>
+            <span style={{ fontWeight: '500', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Name:</span>
             <input
               type="text"
+              name="username"
+              id="username"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Username"
-              className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              autoComplete="username"
+              style={{ border: '1px solid #d1d5db', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', width: '100%', boxSizing: 'border-box' }}
               required
             />
           </label>
 
-          <label className="flex flex-col">
-            Password: 
+          <label style={{ display: 'flex', flexDirection: 'column', marginBottom: '1.5rem' }}>
+            <span style={{ fontWeight: '500', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Password:</span>
             <input
               type="password"
+              name="password"
+              id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              autoComplete="current-password"
+              style={{ border: '1px solid #d1d5db', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', width: '100%', boxSizing: 'border-box' }}
               required
             />
           </label>
@@ -60,14 +66,34 @@ export default function Login({ onLogin }) {
           <button
             type="submit"
             disabled={loading}
-            className={`py-2 rounded text-white ${
-              loading ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
-            }`}
+            style={{ 
+              padding: '0.75rem 1rem', 
+              borderRadius: '0.375rem', 
+              color: 'white', 
+              fontWeight: '500',
+              backgroundColor: loading ? '#93c5fd' : '#3b82f6',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              border: 'none',
+              width: '100%',
+              boxSizing: 'border-box'
+            }}
           >
             {loading ? "Logging In..." : "Login"}
           </button>
 
-          {error && <div className="text-red-500 text-sm">{error}</div>}
+          {error && (
+            <div style={{ 
+              color: '#dc2626', 
+              fontSize: '0.875rem', 
+              backgroundColor: '#fef2f2', 
+              padding: '0.75rem', 
+              borderRadius: '0.375rem', 
+              border: '1px solid #fecaca',
+              marginTop: '1rem'
+            }}>
+              {error}
+            </div>
+          )}
         </form>
       </div>
   );

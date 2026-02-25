@@ -1,36 +1,64 @@
 // Habit management routes - create, read, complete, and delete habits
 import express from 'express'
 import sql from '../db.js'
-import { needsReset, calculateStreak } from '../habitHelpers.js'
 import { authenticateToken } from '../middleware/auth.js'
-
 
 const router = express.Router()
 
-// GET all habits for the authenticated user with completion status and streak
+// Helper function to check if a habit needs to be reset based on frequency
+function needsReset(completedAt, frequency) {
+  if (!completedAt) return false;
+  
+  const now = new Date();
+  const completedDate = new Date(completedAt);
+  
+  switch (frequency) {
+    case 'daily':
+      // Reset if completed on a different day
+      return completedDate.toDateString() !== now.toDateString();
+    case 'weekly':
+      // Reset if completed in a different week
+      const weekDiff = Math.floor((now - completedDate) / (7 * 24 * 60 * 60 * 1000));
+      return weekDiff >= 1;
+    case 'monthly':
+      // Reset if completed in a different month
+      return completedDate.getMonth() !== now.getMonth() || 
+             completedDate.getFullYear() !== now.getFullYear();
+    default:
+      return false;
+  }
+}
+
+// GET all habits for the authenticated user
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const habits = await sql`
+    let habits = await sql`
       SELECT * FROM "habit-tracker".habits
       WHERE user_id = ${req.user.userId}
+      ORDER BY created_at DESC
     `
-
-    // Enhance each habit with completion status and current streak
-    const habitsWithStatus = await Promise.all(
-      habits.map(async (habit) => {
-        const needsResetResult = await needsReset(habit.id);
-        const streak = await calculateStreak(habit.id);
-        return {
-          ...habit,
-          can_complete: needsResetResult !== null ? needsResetResult : true,
-          is_completed: needsResetResult !== null ? !needsResetResult : false,
-          streak: streak
-        };
-      })
-    );
-
-    res.json(habitsWithStatus)
+    
+    // Check each habit to see if it needs to be reset
+    const resetPromises = habits.map(async (habit) => {
+      if (habit.is_completed && needsReset(habit.completed_at, habit.frequency)) {
+        // Reset the habit
+        const updated = await sql`
+          UPDATE "habit-tracker".habits
+          SET is_completed = false,
+              completed_at = NULL
+          WHERE id = ${habit.id}
+          RETURNING *
+        `
+        return updated[0];
+      }
+      return habit;
+    });
+    
+    habits = await Promise.all(resetPromises);
+    
+    res.json(habits)
   } catch (err) {
+    console.error('Error fetching habits:', err)
     res.status(500).json({ error: err.message })
   }
 })
@@ -40,88 +68,93 @@ router.post('/', authenticateToken, async (req, res) => {
   const { title, description, frequency } = req.body
   const user_id = req.user.userId
 
-  console.log('req.body:', req.body)
-  console.log('req.user:', req.user)
-
   try {
     const newHabit = await sql`
       INSERT INTO "habit-tracker".habits (user_id, title, description, frequency)
-      VALUES (${user_id}, ${title}, ${description}, ${frequency})
+      VALUES (${user_id}, ${title}, ${description || ''}, ${frequency || 'daily'})
       RETURNING *
     `
     res.status(201).json(newHabit[0])
   } catch (err) {
+    console.error('Error creating habit:', err)
     res.status(500).json({ error: err.message })
   }
 })
 
-// POST mark habit as completed for the current period (daily/weekly/monthly)
+// POST mark habit as completed (keeping POST to match frontend)
 router.post('/:habit_id/complete', authenticateToken, async (req, res) => {
   const { habit_id } = req.params
   const user_id = req.user.userId
 
   try {
-    // Verify habit ownership before allowing completion
+    // Verify habit ownership
     const habit = await sql`
       SELECT * FROM "habit-tracker".habits
       WHERE id = ${habit_id} AND user_id = ${user_id}
     `
+    
     if (habit.length === 0) {
       return res.status(404).json({ error: 'Habit not found or not yours' })
     }
 
-    // Prevent duplicate completions for the same period
-    const reset = await needsReset(habit_id)
-    if (!reset) return res.status(400).json({ error: 'Already completed this period' })
+    // Check if it needs to be reset first
+    const shouldReset = needsReset(habit[0].completed_at, habit[0].frequency);
+    
+    if (shouldReset) {
+      // Reset the habit first (streak resets to 0 if missed)
+      await sql`
+        UPDATE "habit-tracker".habits
+        SET is_completed = false,
+            streak = 0,
+            completed_at = NULL
+        WHERE id = ${habit_id}
+      `
+    }
 
-    // Insert a new habit_log
-    const result = await sql`
-      INSERT INTO "habit-tracker".habit_logs (habit_id, status, date)
-      VALUES (${habit_id}, true, CURRENT_TIMESTAMP)
+    // Check if already completed (after potential reset)
+    if (habit[0].is_completed && !shouldReset) {
+      return res.status(400).json({ error: 'Already completed this period' })
+    }
+
+    // Mark as completed and increment streak
+    const newStreak = shouldReset ? 1 : (habit[0].streak || 0) + 1;
+    
+    const updated = await sql`
+      UPDATE "habit-tracker".habits
+      SET is_completed = true,
+          streak = ${newStreak},
+          completed_at = CURRENT_TIMESTAMP
+      WHERE id = ${habit_id} AND user_id = ${user_id}
       RETURNING *
     `
     
-    // Calculate the new streak after completion
-    const newStreak = await calculateStreak(habit_id)
-    
     res.json({ 
-      success: true, 
-      log: result[0],
-      streak: newStreak 
+      success: true,
+      habit: updated[0],
+      streak: newStreak
     })
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to log habit' })
+    console.error('Error completing habit:', err)
+    res.status(500).json({ error: err.message })
   }
 })
 
-// DELETE a habit and all its associated logs
+// DELETE a habit
 router.delete('/:habit_id', authenticateToken, async (req, res) => {
   const { habit_id } = req.params
   const user_id = req.user.userId
 
   try {
-    // Ensure the habit belongs to the current user
-    const habit = await sql`
-      SELECT * FROM "habit-tracker".habits
-      WHERE id = ${habit_id} AND user_id = ${user_id}
-    `
-    if (habit.length === 0) {
-      return res.status(404).json({ error: 'Habit not found or not yours' })
-    }
-
-    // Delete all habit logs first (due to foreign key constraint)
-    await sql`
-      DELETE FROM "habit-tracker".habit_logs
-      WHERE habit_id = ${habit_id}
-    `
-
-    // Delete the habit
+    // Verify ownership and delete
     const deletedHabit = await sql`
       DELETE FROM "habit-tracker".habits
       WHERE id = ${habit_id} AND user_id = ${user_id}
       RETURNING *
     `
+
+    if (deletedHabit.length === 0) {
+      return res.status(404).json({ error: 'Habit not found or not yours' })
+    }
 
     res.json({ 
       success: true, 
@@ -129,10 +162,9 @@ router.delete('/:habit_id', authenticateToken, async (req, res) => {
       deleted_habit: deletedHabit[0]
     })
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to delete habit' })
+    console.error('Error deleting habit:', err)
+    res.status(500).json({ error: err.message })
   }
 })
-
 
 export default router

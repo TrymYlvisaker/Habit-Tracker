@@ -10,7 +10,7 @@ const router = express.Router()
 // GET all users
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const users = await sql`SELECT id, name, email, created_at FROM "habit-tracker".users`
+    const users = await sql`SELECT id, name, created_at FROM "habit-tracker".users`
     res.json(users)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -19,7 +19,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // POST /users/signup — Register a new user with hashed password
 router.post('/signup', async (req, res) => {
-  const { name, email, password } = req.body
+  const { name, password } = req.body
 
   if (!name || !password) {
     return res.status(400).json({ error: 'Name and password are required' })
@@ -30,12 +30,22 @@ router.post('/signup', async (req, res) => {
     const password_hash = await bcrypt.hash(password, 10)
 
     const newUser = await sql`
-      INSERT INTO "habit-tracker".users (name, email, password_hash)
-      VALUES (${name}, ${email || null}, ${password_hash})
-      RETURNING id, name, email, created_at
+      INSERT INTO "habit-tracker".users (name, password_hash)
+      VALUES (${name}, ${password_hash})
+      RETURNING id, name, created_at
     `
 
-    res.status(201).json(newUser[0])
+    // Generate JWT token immediately after signup (auto-login)
+    const token = jwt.sign(
+      { userId: newUser[0].id, name: newUser[0].name },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    )
+
+    res.status(201).json({
+      user: newUser[0],
+      token
+    })
   } catch (err) {
     if (err.code === '23505') {
       // Unique violation (name already exists)
@@ -55,7 +65,7 @@ router.post('/login', async (req, res) => {
 
   try {
     const users = await sql`
-      SELECT id, name, email, password_hash
+      SELECT id, name, password_hash
       FROM "habit-tracker".users
       WHERE name = ${name}
     `
@@ -76,12 +86,12 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
         { userId: user.id, name: user.name },
         process.env.JWT_SECRET,
-        { expiresIn: '1h' }
+        { expiresIn: '7d' }
     )
 
     res.json({ 
         message: 'Login successful', 
-        user: { id: user.id, name: user.name, email: user.email }, 
+        user: { id: user.id, name: user.name }, 
         token 
     })
   } catch (err) {

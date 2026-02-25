@@ -3,7 +3,6 @@ import { signup } from "../api";
 
 export default function Signup({ onSignup }) {
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -15,7 +14,7 @@ export default function Signup({ onSignup }) {
     setSuccess("");
     setLoading(true);
     try {
-      const response = await signup({ name, email, password });
+      const response = await signup({ name, password });
       setSuccess("Signup successful!");
       console.log(response);
       
@@ -33,40 +32,35 @@ export default function Signup({ onSignup }) {
   };
 
   return (
-      <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-4 text-center">Sign Up</h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="flex flex-col">
-            Name: 
+      <div style={{ maxWidth: '400px', margin: '0 auto', padding: '2rem', backgroundColor: 'white', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '2rem', textAlign: 'center' }}>Sign Up</h1>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', marginBottom: '1.5rem' }}>
+            <span style={{ fontWeight: '500', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Name:</span>
             <input
               type="text"
+              name="username"
+              id="signup-username"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Username"
-              className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              autoComplete="username"
+              style={{ border: '1px solid #d1d5db', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', width: '100%', boxSizing: 'border-box' }}
               required
             />
           </label>
 
-          <label className="flex flex-col">
-            Email (optional): 
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </label>
-
-          <label className="flex flex-col">
-            Password: 
+          <label style={{ display: 'flex', flexDirection: 'column', marginBottom: '1.5rem' }}>
+            <span style={{ fontWeight: '500', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Password:</span>
             <input
               type="password"
+              name="password"
+              id="signup-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              autoComplete="new-password"
+              style={{ border: '1px solid #d1d5db', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', width: '100%', boxSizing: 'border-box' }}
               required
             />
           </label>
@@ -74,16 +68,49 @@ export default function Signup({ onSignup }) {
           <button
             type="submit"
             disabled={loading}
-            className={`py-2 rounded text-white ${
-              loading ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
-            }`}
+            style={{ 
+              padding: '0.75rem 1rem', 
+              borderRadius: '0.375rem', 
+              color: 'white', 
+              fontWeight: '500',
+              backgroundColor: loading ? '#93c5fd' : '#3b82f6',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              border: 'none',
+              width: '100%',
+              boxSizing: 'border-box'
+            }}
           >
             {loading ? "Signing Up..." : "Sign Up"}
           </button>
 
-          {error && <div className="text-red-500 text-sm">{error}</div>}
-          {success && <div className="text-green-500 text-sm">{success}</div>}
+          {error && (
+            <div style={{ 
+              color: '#dc2626', 
+              fontSize: '0.875rem', 
+              backgroundColor: '#fef2f2', 
+              padding: '0.75rem', 
+              borderRadius: '0.375rem', 
+              border: '1px solid #fecaca',
+              marginTop: '1rem'
+            }}>
+              {error}
+            </div>
+          )}
+          
+          {success && (
+            <div style={{ 
+              color: '#16a34a', 
+              fontSize: '0.875rem', 
+              backgroundColor: '#f0fdf4', 
+              padding: '0.75rem', 
+              borderRadius: '0.375rem', 
+              border: '1px solid #86efac',
+              marginTop: '1rem'
+            }}>
+              {success}
+            </div>
+          )}
         </form>
       </div>
   );
-} 
+}

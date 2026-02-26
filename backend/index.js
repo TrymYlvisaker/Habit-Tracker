@@ -1,10 +1,15 @@
 // Main server file for the Habit Tracker API
+import dotenv from 'dotenv'
 import express from 'express'
-import 'dotenv/config'
-import cors from 'cors'  
+import cors from 'cors'
+
+// Load environment-specific configuration
+const envFile = `.env.${process.env.NODE_ENV || 'development'}`
+dotenv.config({ path: envFile })  
 import usersRouter from './Routes/users.js'
 import habitsRouter from './Routes/habits.js'
 import habitLogsRouter from './Routes/habit_logs.js'
+import sql from './db.js'
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -30,6 +35,17 @@ app.get('/', (req, res) => {
   res.send('Habit Tracker API is running!')
 })
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`🚀 Server running at http://localhost:${port}`)
+  console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`)
+  console.log(`🗄️  Database: ${process.env.DATABASE_URL.includes('neon.tech') ? 'Neon (Production)' : 'Local PostgreSQL'}`)
+  console.log(`🌐 CORS enabled for: ${process.env.FRONTEND_URL}`)
+  
+  // Test database connection
+  try {
+    await sql`SELECT NOW()`
+    console.log('✅ Database connection successful')
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message)
+  }
 })

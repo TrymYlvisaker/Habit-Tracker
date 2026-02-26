@@ -26,3 +26,5 @@ Thumbs.db
 .env.local
 .env.*.local
 *.pid
+.vercel
+.env*.local

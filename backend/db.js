@@ -1,6 +1,10 @@
 // Database connection configuration using postgres.js
-import 'dotenv/config'
+import dotenv from 'dotenv'
 import postgres from 'postgres'
+
+// Load environment-specific configuration
+const envFile = `.env.${process.env.NODE_ENV || 'development'}`
+dotenv.config({ path: envFile })
 
 const connectionString = process.env.DATABASE_URL
 

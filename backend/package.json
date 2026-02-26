@@ -1,5 +1,13 @@
 {
   "type": "module",
+  "scripts": {
+    "start": "cross-env NODE_ENV=development node index.js",
+    "start:dev": "cross-env NODE_ENV=development node index.js",
+    "start:prod": "cross-env NODE_ENV=production node index.js",
+    "setup": "cross-env NODE_ENV=development node setup-database.js",
+    "setup:dev": "cross-env NODE_ENV=development node setup-database.js",
+    "setup:prod": "cross-env NODE_ENV=production node setup-database.js"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.58.0",
     "bcrypt": "^6.0.0",
@@ -8,5 +16,8 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
   }
 }

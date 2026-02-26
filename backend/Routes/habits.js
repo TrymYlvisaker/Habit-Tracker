@@ -101,10 +101,11 @@ router.post('/:habit_id/complete', authenticateToken, async (req, res) => {
     const shouldReset = needsReset(habit[0].completed_at, habit[0].frequency);
     
     if (shouldReset) {
-      // Reset the habit first
+      // Reset the habit first (streak resets to 0 if missed)
       await sql`
         UPDATE "habit-tracker".habits
         SET is_completed = false,
+            streak = 0,
             completed_at = NULL
         WHERE id = ${habit_id}
       `
@@ -115,10 +116,13 @@ router.post('/:habit_id/complete', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Already completed this period' })
     }
 
-    // Mark as completed
+    // Mark as completed and increment streak
+    const newStreak = shouldReset ? 1 : (habit[0].streak || 0) + 1;
+    
     const updated = await sql`
       UPDATE "habit-tracker".habits
       SET is_completed = true,
+          streak = ${newStreak},
           completed_at = CURRENT_TIMESTAMP
       WHERE id = ${habit_id} AND user_id = ${user_id}
       RETURNING *
@@ -126,7 +130,8 @@ router.post('/:habit_id/complete', authenticateToken, async (req, res) => {
     
     res.json({ 
       success: true,
-      habit: updated[0]
+      habit: updated[0],
+      streak: newStreak
     })
   } catch (err) {
     console.error('Error completing habit:', err)

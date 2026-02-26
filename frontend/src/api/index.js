@@ -5,7 +5,7 @@ const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replac
 async function handleResponse(res) {
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.message || "API Error");
+    throw new Error(data.error || data.message || "API Error");
   }
   return data;
 }

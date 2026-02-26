@@ -25,6 +25,15 @@ router.post('/signup', async (req, res) => {
     return res.status(400).json({ error: 'Name and password are required' })
   }
 
+  // Validate input lengths
+  if (name.length < 1 || name.length > 100) {
+    return res.status(400).json({ error: 'Name must be between 1 and 100 characters' })
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' })
+  }
+
   try {
     // Hash the password before storing
     const password_hash = await bcrypt.hash(password, 10)

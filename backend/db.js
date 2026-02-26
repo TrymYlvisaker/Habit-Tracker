@@ -8,10 +8,14 @@ if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: envFile })
 }
 
-const connectionString = process.env.DATABASE_URL
+// Support both POSTGRES_URL (Vercel default) and DATABASE_URL
+const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL
+
+if (!connectionString) {
+  throw new Error('Missing database connection string. Set POSTGRES_URL or DATABASE_URL environment variable.')
+}
 
 // Configure postgres connection with SSL and connection pooling
-// Auto-detect SSL based on connection string (Neon requires SSL)
 const requiresSsl = connectionString?.includes('sslmode=require') || connectionString?.includes('neon.tech')
 
 const sql = postgres(connectionString, {

@@ -68,10 +68,29 @@ router.post('/', authenticateToken, async (req, res) => {
   const { title, description, frequency } = req.body
   const user_id = req.user.userId
 
+  // Validate input
+  if (!title || title.trim().length === 0) {
+    return res.status(400).json({ error: 'Title is required' })
+  }
+
+  if (title.length > 200) {
+    return res.status(400).json({ error: 'Title must be 200 characters or less' })
+  }
+
+  if (description && description.length > 1000) {
+    return res.status(400).json({ error: 'Description must be 1000 characters or less' })
+  }
+
+  const validFrequencies = ['daily', 'weekly', 'monthly']
+  const freq = frequency?.toLowerCase() || 'daily'
+  if (!validFrequencies.includes(freq)) {
+    return res.status(400).json({ error: 'Frequency must be daily, weekly, or monthly' })
+  }
+
   try {
     const newHabit = await sql`
       INSERT INTO "habit-tracker".habits (user_id, title, description, frequency)
-      VALUES (${user_id}, ${title}, ${description || ''}, ${frequency || 'daily'})
+      VALUES (${user_id}, ${title}, ${description || ''}, ${freq})
       RETURNING *
     `
     res.status(201).json(newHabit[0])

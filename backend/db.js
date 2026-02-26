@@ -11,8 +11,11 @@ if (process.env.NODE_ENV !== 'production') {
 const connectionString = process.env.DATABASE_URL
 
 // Configure postgres connection with SSL and connection pooling
+// Auto-detect SSL based on connection string (Neon requires SSL)
+const requiresSsl = connectionString?.includes('sslmode=require') || connectionString?.includes('neon.tech')
+
 const sql = postgres(connectionString, {
-  ssl: process.env.NODE_ENV === 'production' ? 'require' : false, // Only use SSL in production         
+  ssl: requiresSsl ? 'require' : false,
   max: 10,                // Maximum connections in pool
   idle_timeout: 60,       // Close idle connections after 60 seconds
   application_name: 'habit-tracker-app',  

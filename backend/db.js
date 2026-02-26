@@ -1,10 +1,12 @@
 // Database connection configuration using postgres.js
-import dotenv from 'dotenv'
 import postgres from 'postgres'
 
-// Load environment-specific configuration
-const envFile = `.env.${process.env.NODE_ENV || 'development'}`
-dotenv.config({ path: envFile })
+// Load dotenv only in development (Vercel provides env vars directly)
+if (process.env.NODE_ENV !== 'production') {
+  const dotenv = await import('dotenv')
+  const envFile = `.env.${process.env.NODE_ENV || 'development'}`
+  dotenv.config({ path: envFile })
+}
 
 const connectionString = process.env.DATABASE_URL
 
